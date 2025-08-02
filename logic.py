@@ -2,7 +2,7 @@ import sqlite3
 from config import DATABASE
 
 skills = [ (_,) for _ in (['Python', 'SQL', 'API', 'Telegram'])]
-statuses = [ (_,) for _ in (['На этапе проектирования', 'В процессе разработки', 'Разработан. Готов к использованию.', 'Обновлен', 'Завершен. Не поддерживается'])]
+statuses = [ (_,) for _ in (['На этапе проектирования', 'В процессе разработки', 'Разработан. Готов к использованию', 'Обновлен', 'Завершён. Не поддерживается'])]
 
 class DB_Manager:
     def __init__(self, database):
@@ -11,26 +11,27 @@ class DB_Manager:
     def create_tables(self):
         conn = sqlite3.connect(self.database)
         with conn:
-            conn.execute('''CREATE TABLE projects (
+            conn.execute('''CREATE TABLE IF NOT EXISTS projects (
                             project_id INTEGER PRIMARY KEY,
                             user_id INTEGER,
                             project_name TEXT NOT NULL,
                             description TEXT,
                             url TEXT,
                             status_id INTEGER,
+                            photo TEXT,
                             FOREIGN KEY(status_id) REFERENCES status(status_id)
                         )''')
-            conn.execute('''CREATE TABLE skills (
+            conn.execute('''CREATE TABLE IF NOT EXISTS skills (
                             skill_id INTEGER PRIMARY KEY,
                             skill_name TEXT
                         )''')
-            conn.execute('''CREATE TABLE project_skills (
+            conn.execute('''CREATE TABLE IF NOT EXISTS project_skills (
                             project_id INTEGER,
                             skill_id INTEGER,
                             FOREIGN KEY(project_id) REFERENCES projects(project_id),
                             FOREIGN KEY(skill_id) REFERENCES skills(skill_id)
                         )''')
-            conn.execute('''CREATE TABLE status (
+            conn.execute('''CREATE TABLE IF NOT EXISTS status (
                             status_id INTEGER PRIMARY KEY,
                             status_name TEXT
                         )''')
@@ -41,6 +42,12 @@ class DB_Manager:
             with conn:
                 conn.executemany(sql, data)
                 conn.commit()
+
+    def add_photo_column(self):
+        conn = sqlite3.connect(self.database)
+        with conn:
+            conn.execute('ALTER TABLE projects ADD COLUMN photo TEXT')
+            conn.commit()
     
     def __select_data(self, sql, data = tuple()):
         conn = sqlite3.connect(self.database)
@@ -124,5 +131,5 @@ WHERE project_name=? AND user_id=?
 
 if __name__ == '__main__':
     manager = DB_Manager(DATABASE)
-    #manager.create_tables()
+    manager.create_tables()
     manager.default_insert()
